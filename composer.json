@@ -1,0 +1,33 @@
+{
+    "name": "acdh-oeaw/arche-iiif-image",
+    "type": "library",
+    "description": "An ARCHE dissemination service implementing IIIF Image API",
+    "keywords": [],
+    "homepage": "https://github.com/acdh-oeaw/arche-iiif-image",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mateusz Żółtak",
+            "email": "mzoltak@oeaw.ac.at"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "acdh-oeaw/arche-diss-cache": "^1.2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "acdhOeaw\\": "src/acdhOeaw"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "*",
+        "phpstan/phpstan": "*",
+        "zozlak/yaml-merge": "^1.0"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "acdhOeaw\\arche\\iiifImage\\tests\\": "tests"
+        }
+    }
+}

@@ -1,0 +1,6 @@
+/composer.lock
+/vendor
+/nbproject
+/.phpunit.cache
+/build/docroot
+/build/logs
