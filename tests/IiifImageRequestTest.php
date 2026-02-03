@@ -29,9 +29,9 @@ namespace acdhOeaw\arche\iiifImage\tests;
 use acdhOeaw\arche\iiifImage\IiifImageRequest;
 use acdhOeaw\arche\iiifImage\ParamFormat;
 use acdhOeaw\arche\iiifImage\ParamQuality;
-use acdhOeaw\arche\iiifImage\ParamRotation;
-use acdhOeaw\arche\iiifImage\ParamSize;
-use acdhOeaw\arche\iiifImage\ParamRegion;
+use acdhOeaw\arche\iiifImage\Service;
+use acdhOeaw\arche\iiifImage\Size;
+use acdhOeaw\arche\iiifImage\Bounds;
 use acdhOeaw\arche\iiifImage\Image;
 use acdhOeaw\arche\iiifImage\RequestParamException;
 
@@ -51,7 +51,7 @@ class IiifImageRequestTest extends \PHPUnit\Framework\TestCase {
     public function testFormat(): void {
         foreach (ParamFormat::FORMATS as $i) {
             $req = new IiifImageRequest($this->buildRequestString(format: $i));
-            $this->assertEquals($i, $req->format->getFormat());
+            $this->assertEquals($i, $req->format->format);
         }
         $this->expectException(RequestParamException::class);
         $this->expectExceptionCode(400);
@@ -62,7 +62,7 @@ class IiifImageRequestTest extends \PHPUnit\Framework\TestCase {
     public function testQuality(): void {
         foreach (ParamQuality::QUALITIES as $i) {
             $req = new IiifImageRequest($this->buildRequestString(quality: $i));
-            $this->assertEquals($i, $req->quality->getQuality());
+            $this->assertEquals($i, $req->quality->quality);
         }
         $this->expectException(RequestParamException::class);
         $this->expectExceptionCode(400);
@@ -74,8 +74,8 @@ class IiifImageRequestTest extends \PHPUnit\Framework\TestCase {
         foreach (['', '!'] as $j) {
             foreach ([0, 0.000, 0.0014, 97, 179.58, 360, 360.000]as $i) {
                 $req = new IiifImageRequest($this->buildRequestString(rotation: "$j$i"));
-                $this->assertEquals($i, $req->rotation->getAngle());
-                $this->assertEquals(!empty($j), $req->rotation->getMirror());
+                $this->assertEquals($i, $req->rotation->angle);
+                $this->assertEquals(!empty($j), $req->rotation->mirror);
             }
         }
         foreach ([-10, '-0', 360.0001, '*50'] as $i) {
@@ -88,19 +88,115 @@ class IiifImageRequestTest extends \PHPUnit\Framework\TestCase {
         }
     }
 
-    public function testSize(): void {
-        
-    }
-
     public function testRegion(): void {
         $img       = Image::fromDimensions(201, 100);
         $testCases = [
-            'full' => [
-                'x0' => 0, 'y0' => 0, 'x1' => 201, 'y1' => 100, 'w'  => 201, 'h'  => 100],
+            'full'                    => new Bounds(0, 0, 201, 100),
+            'square'                  => new Bounds(50, 0, 150, 100),
+            '28,30,42,55'             => new Bounds(28, 30, 70, 85), // no clip
+            '37,28,129,245'           => new Bounds(37, 28, 166, 100), // clip x
+            '190,0,20,95'             => new Bounds(190, 0, 201, 95), // clip y
+            '0,90,300,20'             => new Bounds(0, 90, 201, 100), // clip both
+            'pct:28.5,30,50.5,50'     => new Bounds(57, 30, 158, 80), // no clip
+            'pct:37,28,129,45.99'     => new Bounds(74, 28, 201, 73), // clip x
+            'pct:0.0001,20,20.899,95' => new Bounds(0, 20, 42, 100), // clip y
+            'pct:30,60,110,100'       => new Bounds(60, 60, 201, 100), // clip both
         ];
         foreach ($testCases as $region => $output) {
             $req = new IiifImageRequest($this->buildRequestString(region: $region));
             $this->assertEquals($output, $req->region->getBounds($img));
+        }
+
+        $errorCases = [
+            'foo'                   => 'Invalid region parameter value: foo',
+            '0, 0, 100, 100'        => 'Invalid region parameter value: 0, 0, 100, 100',
+            '-10,0,10,10'           => 'Invalid region parameter value: -10,0,10,10',
+            '0,-10,10,10'           => 'Invalid region parameter value: 0,-10,10,10',
+            '0,0,-10,10'            => 'Invalid region parameter value: 0,0,-10,10',
+            '0,0,10,-10'            => 'Invalid region parameter value: 0,0,10,-10',
+            '201,0,100,100'         => 'Invalid region requested: (x: 201, y: 0, width: 0, height: 100)',
+            '0,100,100,100'         => 'Invalid region requested: (x: 0, y: 100, width: 100, height: 0)',
+            '300,500,90,80'         => 'Invalid region requested: (x: 201, y: 100, width: 0, height: 0)',
+            'pct:-1,0,100,100'      => 'Invalid region parameter value: pct:-1,0,100,100',
+            'pct:0,-1,100,100'      => 'Invalid region parameter value: pct:0,-1,100,100',
+            'pct:0,0,-10,100'       => 'Invalid region parameter value: pct:0,0,-10,100',
+            'pct:0,0,100,-10'       => 'Invalid region parameter value: pct:0,0,100,-10',
+            'pct:100,99.99,100,100' => 'Invalid region requested: (x: 201, y: 99, width: 0, height: 1)',
+            'pct:99.99,120,100,100' => 'Invalid region requested: (x: 200, y: 100, width: 1, height: 0)',
+            'pct:100,120,100,100'   => 'Invalid region requested: (x: 201, y: 100, width: 0, height: 0)',
+        ];
+        foreach ($errorCases as $region => $errorMsg) {
+            try {
+                $req    = new IiifImageRequest($this->buildRequestString(region: $region));
+                $bounds = $req->region->getBounds($img);
+                $this->assertTrue(false, $bounds);
+            } catch (RequestParamException $e) {
+                $this->assertEquals(400, $e->getCode());
+                $this->assertEquals($errorMsg, $e->getMessage());
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\Depends('testRegion')]
+    public function testSize(): void {
+        $image   = Image::fromDimensions(201, 100);
+        $service = new Service(300, 500);
+
+        $testCases = [
+            'max' => new Size(201, 100),
+            '^max' => new Size(300, 500),
+            '100,' => new Size(100, 50),
+            ',75'=> new Size(151, 75),
+            '^300,'=> new Size(300, 149),
+            '^,129' => new Size(259,129),
+            'pct:50.9' => new Size(102, 51),
+            '^pct:149.2' => new Size(300, 149),
+            '^pct:39' => new Size(78, 39),
+            '101,100' => new Size(101, 100),
+            '^250,50' => new Size(250, 50),
+            '!100,100' => new Size(100, 50),
+            '!201,50' => new Size(101, 50),
+            '!201,100' => new Size(201, 100),
+            '^!300,500' => new Size(300,149),
+        ];
+        foreach ($testCases as $size => $output) {
+            $req    = new IiifImageRequest($this->buildRequestString(size: $size));
+            $bounds = $req->region->getBounds($image);
+            $this->assertEquals($output, $req->size->getSize($bounds, $image, $service));
+        }
+
+        $errorCases = [
+            '100.0,15' => 'Invalid size parameter value: 100.0,15',
+            '300,' => 'Invalid size requested: 300,',
+            ',101' => 'Invalid size requested: ,101',
+            '0,' => 'Invalid size requested: 0,',
+            ',0' => 'Invalid size requested: ,0',
+            '^400,' => 'Invalid size requested: ^400,',
+            '^,501' => 'Invalid size requested: ^,501',
+            '^,250' => 'Invalid size requested: ^,250',
+            'pct:0'     => 'Invalid size requested: pct:0',
+            'pct:100.3' => 'Invalid size requested: pct:100.3',
+            '^pct:149.6' => 'Invalid size requested: ^pct:149.6',
+            '0,0' => 'Invalid size requested: 0,0',
+            '250,50' => 'Invalid size requested: 250,50',
+            '!100,'  => 'Invalid size parameter value: !100,',
+            '!,100'  => 'Invalid size parameter value: !,100',
+            '!max'   => 'Invalid size parameter value: !max',
+            '^!100,' => 'Invalid size parameter value: ^!100,',
+            '^!,100' => 'Invalid size parameter value: ^!,100',
+            '^!max'  => 'Invalid size parameter value: ^!max',
+            '!202,101' => 'Invalid size requested: !202,101',
+        ];
+        foreach ($errorCases as $size => $errorMsg) {
+            try {
+                $req    = new IiifImageRequest($this->buildRequestString(size: $size));
+                $bounds = $req->region->getBounds($image);
+                $req->size->getSize($bounds, $image, $service);
+                $this->assertTrue(false, $size);
+            } catch (RequestParamException $e) {
+                $this->assertEquals(400, $e->getCode());
+                $this->assertEquals($errorMsg, $e->getMessage());
+            }
         }
     }
 

@@ -39,19 +39,15 @@ class ParamRegion {
     const RELATIVE      = 'pct:[0-9]+(?:[.][0-9]+)?,[0-9]+(?:[.][0-9]+)?,[0-9]+(?:[.][0-9]+)?,[0-9]+(?:[.][0-9]+)?';
     private const VALID = '`^(' . self::FULL . '|' . self::SQUARE . '|' . self::ABSOLUTE . '|' . self::RELATIVE . ')$`';
 
-    public function __construct(private string $region) {
+    public function __construct(public readonly string $region) {
         if (!preg_match(self::VALID, $region)) {
             throw new RequestParamException("Invalid region parameter value: $region");
         }
     }
 
-    /**
-     * 
-     * @return array{'x0': int, 'y0': int, 'x1': int, 'y1': int, 'w': int, 'h': int}
-     */
-    public function getBounds(Image $image): array {
-        $imW = $image->getWidth();
-        $imH = $image->getHeight();
+    public function getBounds(Image $image): Bounds {
+        $imW = $image->w;
+        $imH = $image->h;
         if ($this->region === self::FULL) {
             $x0 = $y0 = 0;
             $x1 = $imW;
@@ -63,7 +59,7 @@ class ParamRegion {
             $x1 = $x0 + $wh;
             $y1 = $y0 + $wh;
         } elseif (str_starts_with($this->region, 'pct:')) {
-            list($px0, $py0, $pw, $ph) = array_map(fn($x) => (float) $x, explode(',', substr($this->region, 4)));
+            list($px0, $py0, $pw, $ph) = array_map(fn($x) => ((float) $x) / 100, explode(',', substr($this->region, 4)));
             $x0 = (int) ($imW * $px0);
             $y0 = (int) ($imH * $py0);
             $x1 = (int) ($x0 + $imW * $pw);
@@ -77,15 +73,9 @@ class ParamRegion {
         $x1 = min($x1, $imW);
         $y0 = min($y0, $imH);
         $y1 = min($y1, $imH);
-        $w  = $x1 - $x0;
-        $h  = $y1 - $y0;
-        if ($w === 0 || $h === 0) {
-            throw new RequestParamException("Requested region is invalid (x: $x0, y: $y0, width: $w, height: $h)");
+        if ($x1 - $x0 <= 0 || $y1 - $y0 <= 0) {
+            throw new RequestParamException("Invalid region requested: (x: $x0, y: $y0, width: " . ($x1 - $x0) . ", height: " . ($y1 - $y0) . ")");
         }
-        return [
-            'x0' => $x0, 'y0' => $y0,
-            'x1' => $x1, 'y1' => $y1,
-            'w'  => $w, 'h'  => $h,
-        ];
+        return new Bounds($x0, $y0, $x1, $y1);
     }
 }

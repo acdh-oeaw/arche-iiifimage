@@ -27,23 +27,21 @@
 namespace acdhOeaw\arche\iiifImage;
 
 /**
- * Description of Image
+ * Container for the computed bounds of a requested region.
+ * 
+ * Doesn't provide any validation.
  *
  * @author zozlak
  */
-class Image {
+class Bounds {
 
-    static public function fromDimensions(int $width, int $height): self {
-        $img    = new Image();
-        $img->w = $width;
-        $img->h = $height;
-        return $img;
-    }
+    public readonly int $width;
+    public readonly int $height;
 
-    public readonly int $w;
-    public readonly int $h;
-
-    public function getAspectRatio(): float {
-        return ((float) $this->w) / ((float) $this->h);
+    public function __construct(public readonly int $x0,
+                                public readonly int $y0,
+                                public readonly int $x1, public readonly int $y1) {
+        $this->width  = $x1 - $x0;
+        $this->height = $y1 - $y0;
     }
 }

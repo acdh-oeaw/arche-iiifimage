@@ -40,13 +40,9 @@ class ParamQuality {
     const QUALITIES     = [self::COLOR, self::GRAY, self::BITONAL, self::DEFAULT];
     private const VALID = '`^(' . self::COLOR . '|' . self::GRAY . '|' . self::BITONAL . '|' . self::DEFAULT . ')$`';
 
-    public function __construct(private string $quality) {
+    public function __construct(public readonly string $quality) {
         if (!preg_match(self::VALID, $quality)) {
             throw new RequestParamException("Invalid quality parameter value: $quality");
         }
-    }
-
-    public function getQuality(): string {
-        return $this->quality;
     }
 }

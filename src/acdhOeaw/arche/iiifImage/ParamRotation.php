@@ -35,8 +35,8 @@ class ParamRotation {
 
     private const VALID = '`^[!]?[0-9]+([.][0-9]+)?$`';
 
-    private bool $mirror = false;
-    private float $angle;
+    public readonly bool $mirror;
+    public readonly float $angle;
 
     public function __construct(string $rotation) {
         if (!preg_match(self::VALID, $rotation)) {
@@ -45,18 +45,12 @@ class ParamRotation {
         if (str_starts_with($rotation, '!')) {
             $this->mirror = true;
             $rotation     = substr($rotation, 1);
+        } else {
+            $this->mirror = false;
         }
         $this->angle = (float) $rotation;
         if ($this->angle < 0 || $this->angle > 360) {
             throw new RequestParamException("Invalid rotation parameter value: $rotation");
         }
-    }
-
-    public function getMirror(): bool {
-        return $this->mirror;
-    }
-
-    public function getAngle(): float {
-        return $this->angle;
     }
 }

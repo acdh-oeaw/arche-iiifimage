@@ -12,7 +12,7 @@
         }
     ],
     "require": {
-        "php": "^8.1",
+        "php": "^8.3",
         "acdh-oeaw/arche-diss-cache": "^1.2.1"
     },
     "autoload": {

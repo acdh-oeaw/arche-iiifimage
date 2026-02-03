@@ -27,23 +27,16 @@
 namespace acdhOeaw\arche\iiifImage;
 
 /**
- * Description of Image
+ * Description of Service
  *
  * @author zozlak
  */
-class Image {
+class Service {
 
-    static public function fromDimensions(int $width, int $height): self {
-        $img    = new Image();
-        $img->w = $width;
-        $img->h = $height;
-        return $img;
-    }
+    public readonly int $maxArea;
 
-    public readonly int $w;
-    public readonly int $h;
-
-    public function getAspectRatio(): float {
-        return ((float) $this->w) / ((float) $this->h);
+    public function __construct(public readonly int $maxWidth,
+                                public readonly int $maxHeight) {
+        $this->maxArea = $this->maxWidth * $this->maxHeight;
     }
 }

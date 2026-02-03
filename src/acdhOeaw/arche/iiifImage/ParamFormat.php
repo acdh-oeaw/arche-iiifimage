@@ -45,13 +45,9 @@ class ParamFormat {
     ];
     private const VALID = '`^(' . self::JPG . '|' . self::TIF . '|' . self::PNG . '|' . self::GIF . '|' . self::JP2 . '|' . self::PDF . '|' . self::WEBP . '|' . ')$`';
 
-    public function __construct(private string $format) {
+    public function __construct(public readonly string $format) {
         if (!preg_match(self::VALID, $format)) {
             throw new RequestParamException("Invalid format parameter value: $format");
         }
-    }
-
-    public function getFormat(): string {
-        return $this->format;
     }
 }
