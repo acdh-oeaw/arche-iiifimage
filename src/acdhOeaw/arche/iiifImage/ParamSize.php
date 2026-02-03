@@ -36,11 +36,11 @@ class ParamSize {
     private const VALID = '`^\\^?(max|[!]?[0-9]+,[0-9]+|[0-9]+,|,[0-9]+|pct:[0-9]+([.][0-9]+)?)$`';
 
     private string $sizeOrig;
-    public readonly bool $upscale;
-    public readonly bool $keepAspect;
-    public readonly float $percentage;
-    public readonly int $width;
-    public readonly int $height;
+    private bool $upscale;
+    private bool $keepAspect;
+    private float $percentage;
+    private int $width;
+    private int $height;
 
     public function __construct(string $size) {
         $this->sizeOrig = $size;
@@ -79,11 +79,7 @@ class ParamSize {
         $this->keepAspect ??= false;
     }
 
-    /**
-     * 
-     * @return array{'w': int, 'h': int}
-     */
-    public function getSize(Bounds $bounds, Image $image, Service $service): Size {
+    public function getSize(Bounds $bounds, ImageInterface $image, Service $service): Size {
         if ($this->upscale) {
             $maxWidth  = $service->maxWidth;
             $maxHeight = $service->maxHeight;

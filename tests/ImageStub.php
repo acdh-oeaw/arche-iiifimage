@@ -1,0 +1,71 @@
+<?php
+
+/*
+ * The MIT License
+ *
+ * Copyright 2026 zozlak.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+namespace acdhOeaw\arche\iiifImage\tests;
+
+use acdhOeaw\arche\iiifImage\ImageInterface;
+use acdhOeaw\arche\iiifImage\Bounds;
+use acdhOeaw\arche\iiifImage\Size;
+use acdhOeaw\arche\iiifImage\IiifImageRequest;
+
+/**
+ * Description of Image
+ *
+ * @author zozlak
+ */
+class ImageStub implements ImageInterface {
+
+    static public function fromDimensions(int $width, int $height): self {
+        $img         = new ImageStub('');
+        $img->width  = $width;
+        $img->height = $height;
+        return $img;
+    }
+
+    private int $width;
+    private int $height;
+
+    public function __construct(string $path) {
+        
+    }
+
+    public function getAspectRatio(): float {
+        return ((float) $this->width) / ((float) $this->height);
+    }
+
+    public function getWidth(): int {
+        return $this->width;
+    }
+
+    public function getHeight(): int {
+        return $this->height;
+    }
+
+    public function transform(string $targetFile, Bounds $bounds, Size $size,
+                              IiifImageRequest $request): void {
+        
+    }
+}

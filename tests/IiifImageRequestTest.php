@@ -32,7 +32,6 @@ use acdhOeaw\arche\iiifImage\ParamQuality;
 use acdhOeaw\arche\iiifImage\Service;
 use acdhOeaw\arche\iiifImage\Size;
 use acdhOeaw\arche\iiifImage\Bounds;
-use acdhOeaw\arche\iiifImage\Image;
 use acdhOeaw\arche\iiifImage\RequestParamException;
 
 /**
@@ -81,6 +80,8 @@ class IiifImageRequestTest extends \PHPUnit\Framework\TestCase {
         foreach ([-10, '-0', 360.0001, '*50'] as $i) {
             try {
                 $req = new IiifImageRequest($this->buildRequestString(rotation: (string) $i));
+                /** @phpstan-ignore method.impossibleType */
+                $this->assertTrue(false, $i);
             } catch (RequestParamException $e) {
                 $this->assertEquals(400, $e->getCode());
                 $this->assertEquals("Invalid rotation parameter value: $i", $e->getMessage());
@@ -89,7 +90,7 @@ class IiifImageRequestTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testRegion(): void {
-        $img       = Image::fromDimensions(201, 100);
+        $img       = ImageStub::fromDimensions(201, 100);
         $testCases = [
             'full'                    => new Bounds(0, 0, 201, 100),
             'square'                  => new Bounds(50, 0, 150, 100),
@@ -129,7 +130,8 @@ class IiifImageRequestTest extends \PHPUnit\Framework\TestCase {
             try {
                 $req    = new IiifImageRequest($this->buildRequestString(region: $region));
                 $bounds = $req->region->getBounds($img);
-                $this->assertTrue(false, $bounds);
+                /** @phpstan-ignore method.impossibleType */
+                $this->assertTrue(false, $region);
             } catch (RequestParamException $e) {
                 $this->assertEquals(400, $e->getCode());
                 $this->assertEquals($errorMsg, $e->getMessage());
@@ -139,7 +141,7 @@ class IiifImageRequestTest extends \PHPUnit\Framework\TestCase {
 
     #[\PHPUnit\Framework\Attributes\Depends('testRegion')]
     public function testSize(): void {
-        $image   = Image::fromDimensions(201, 100);
+        $image   = ImageStub::fromDimensions(201, 100);
         $service = new Service(300, 500);
 
         $testCases = [
@@ -192,6 +194,7 @@ class IiifImageRequestTest extends \PHPUnit\Framework\TestCase {
                 $req    = new IiifImageRequest($this->buildRequestString(size: $size));
                 $bounds = $req->region->getBounds($image);
                 $req->size->getSize($bounds, $image, $service);
+                /** @phpstan-ignore method.impossibleType */
                 $this->assertTrue(false, $size);
             } catch (RequestParamException $e) {
                 $this->assertEquals(400, $e->getCode());

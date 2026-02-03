@@ -45,9 +45,9 @@ class ParamRegion {
         }
     }
 
-    public function getBounds(Image $image): Bounds {
-        $imW = $image->w;
-        $imH = $image->h;
+    public function getBounds(ImageInterface $image): Bounds {
+        $imW = $image->getWidth();
+        $imH = $image->getHeight();
         if ($this->region === self::FULL) {
             $x0 = $y0 = 0;
             $x1 = $imW;

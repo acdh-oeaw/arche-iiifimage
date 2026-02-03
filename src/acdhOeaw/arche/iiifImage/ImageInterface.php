@@ -27,23 +27,18 @@
 namespace acdhOeaw\arche\iiifImage;
 
 /**
- * Description of Image
  *
  * @author zozlak
  */
-class Image {
+interface ImageInterface {
 
-    static public function fromDimensions(int $width, int $height): self {
-        $img    = new Image();
-        $img->w = $width;
-        $img->h = $height;
-        return $img;
-    }
+    public function __construct(string $path);
 
-    public readonly int $w;
-    public readonly int $h;
+    public function getWidth(): int;
 
-    public function getAspectRatio(): float {
-        return ((float) $this->w) / ((float) $this->h);
-    }
+    public function getHeight(): int;
+
+    public function getAspectRatio(): float;
+
+    public function transform(string $targetFile, Bounds $bounds, Size $size, IiifImageRequest $request): void;
 }
