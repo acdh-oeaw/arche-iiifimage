@@ -32,7 +32,7 @@ namespace acdhOeaw\arche\iiifImage;
  */
 interface ImageInterface {
 
-    public function __construct(string $path);
+    public function __construct(string $path, ServiceConfig $serviceConfig);
 
     public function getWidth(): int;
 
@@ -40,5 +40,5 @@ interface ImageInterface {
 
     public function getAspectRatio(): float;
 
-    public function transform(string $targetFile, Bounds $bounds, Size $size, IiifImageRequest $request): void;
+    public function transform(string $targetFile, IiifImageRequest $request): void;
 }

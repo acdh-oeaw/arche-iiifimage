@@ -79,7 +79,7 @@ class ParamSize {
         $this->keepAspect ??= false;
     }
 
-    public function getSize(Bounds $bounds, ImageInterface $image, Service $service): Size {
+    public function getSize(Bounds $bounds, ImageInterface $image, ServiceConfig $service): Size {
         if ($this->upscale) {
             $maxWidth  = $service->maxWidth;
             $maxHeight = $service->maxHeight;

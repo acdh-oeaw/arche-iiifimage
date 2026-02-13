@@ -4,3 +4,4 @@
 /.phpunit.cache
 /build/docroot
 /build/logs
+/tests/output.*

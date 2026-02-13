@@ -35,13 +35,23 @@ namespace acdhOeaw\arche\iiifImage;
  */
 class IiifImageRequest {
 
-    public string $id;
-    public bool $info = false;
-    public ParamRegion $region;
-    public ParamSize $size;
-    public ParamRotation $rotation;
-    public ParamQuality $quality;
-    public ParamFormat $format;
+    public readonly string $id;
+    public readonly bool $info;
+
+    /** @phpstan-ignore property.uninitializedReadonly */
+    public readonly ParamRegion $region;
+
+    /** @phpstan-ignore property.uninitializedReadonly */
+    public readonly ParamSize $size;
+
+    /** @phpstan-ignore property.uninitializedReadonly */
+    public readonly ParamRotation $rotation;
+
+    /** @phpstan-ignore property.uninitializedReadonly */
+    public readonly ParamQuality $quality;
+
+    /** @phpstan-ignore property.uninitializedReadonly */
+    public readonly ParamFormat $format;
 
     public function __construct(string $request) {
         if (str_ends_with($request, '/info.json')) {
@@ -49,6 +59,7 @@ class IiifImageRequest {
             $this->id   = substr($request, 0, -10);
             return;
         }
+        $this->info     = false;
         $request        = explode('/', $request);
         $qualityFormat  = explode('.', (string) array_pop($request));
         $this->format   = new ParamFormat($qualityFormat[1] ?? '');
@@ -57,5 +68,15 @@ class IiifImageRequest {
         $this->size     = new ParamSize((string) array_pop($request));
         $this->region   = new ParamRegion((string) array_pop($request));
         $this->id       = implode('/', $request);
+    }
+
+    public function getBounds(ImageInterface $image): Bounds {
+        return $this->region->getBounds($image);
+    }
+
+    public function getSize(ImageInterface $image, ServiceConfig $service,
+                            Bounds | null $bounds = null): Size {
+        $bounds ??= $this->getBounds($image);
+        return $this->size->getSize($bounds, $image, $service);
     }
 }

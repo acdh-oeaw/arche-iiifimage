@@ -27,8 +27,7 @@
 namespace acdhOeaw\arche\iiifImage\tests;
 
 use acdhOeaw\arche\iiifImage\ImageInterface;
-use acdhOeaw\arche\iiifImage\Bounds;
-use acdhOeaw\arche\iiifImage\Size;
+use acdhOeaw\arche\iiifImage\ServiceConfig;
 use acdhOeaw\arche\iiifImage\IiifImageRequest;
 
 /**
@@ -38,8 +37,9 @@ use acdhOeaw\arche\iiifImage\IiifImageRequest;
  */
 class ImageStub implements ImageInterface {
 
-    static public function fromDimensions(int $width, int $height): self {
-        $img         = new ImageStub('');
+    static public function fromDimensions(int $width, int $height,
+                                          ServiceConfig $serviceConfig): self {
+        $img         = new ImageStub('', $serviceConfig);
         $img->width  = $width;
         $img->height = $height;
         return $img;
@@ -48,7 +48,7 @@ class ImageStub implements ImageInterface {
     private int $width;
     private int $height;
 
-    public function __construct(string $path) {
+    public function __construct(string $path, ServiceConfig $serviceConfig) {
         
     }
 
@@ -64,8 +64,7 @@ class ImageStub implements ImageInterface {
         return $this->height;
     }
 
-    public function transform(string $targetFile, Bounds $bounds, Size $size,
-                              IiifImageRequest $request): void {
+    public function transform(string $targetFile, IiifImageRequest $request): void {
         
     }
 }

@@ -1,0 +1,39 @@
+name: test and deploy
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        type: boolean
+        description: Deploy if not a release
+        default: false
+  push: ~
+  release:
+    types: [published]
+env:
+  RANCHER_PROJECT: Dissemination services
+  RANCHER_NAMESPACE: arche-iiifimage
+jobs:
+  testAndDeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: acdh-oeaw/arche_cicd_start_action@main
+        with:
+          phpExtensions: json,yaml,pdo,pdo_sqlite,imagick
+          prepareRepoConfig: true
+#      - name: build docker image
+#        run: |
+#          mkdir build/docroot && cp -R `ls -1 | grep -v ^build` build/docroot/ && cp build/config/arche/* build/docroot/ && cp .htaccess build/docroot/
+#          docker build --rm -t "acdhch/$RANCHER_NAMESPACE:latest" --build-arg VARIANT=production --label "buildUrl=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" build
+#      - name: test image
+#        run: |
+#          composer update
+#      - uses: acdh-oeaw/arche_cicd_finish_action@main
+#        with:
+#          pushAndRedeploy: ${{ github.event_name == 'release' && github.event.action == 'published' || inputs.deploy }}
+#          dockerhubLogin: ${{ secrets.DOCKER_USERNAME }}
+#          dockehubPassword: ${{ secrets.DOCKER_PASSWORD }}
+#          imageName: $RANCHER_NAMESPACE
+#          rancherProject: $RANCHER_PROJECT
+#          rancherNamespace: $RANCHER_NAMESPACE
+#          kubectlConfig: ${{ secrets.KUBE_CONFIG }}
+#          coverallsToken: ${{ secrets.coverallsToken }}
