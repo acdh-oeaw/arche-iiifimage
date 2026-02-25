@@ -37,4 +37,8 @@ class Size {
                                 public readonly int $height) {
         
     }
+
+    public function __toString(): string {
+        return $this->width . ',' . $this->height;
+    }
 }

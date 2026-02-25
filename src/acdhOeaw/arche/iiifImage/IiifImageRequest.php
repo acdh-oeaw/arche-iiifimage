@@ -54,7 +54,7 @@ class IiifImageRequest {
     public readonly ParamFormat $format;
 
     public function __construct(string $request) {
-        if (str_ends_with($request, '/info.json')) {
+        if (str_ends_with($request, 'info.json')) {
             $this->info = true;
             $this->id   = substr($request, 0, -10);
             return;
@@ -78,5 +78,15 @@ class IiifImageRequest {
                             Bounds | null $bounds = null): Size {
         $bounds ??= $this->getBounds($image);
         return $this->size->getSize($bounds, $image, $service);
+    }
+
+    public function getCanonical(?ImageInterface $image = null,
+                                 ?ServiceConfig $service = null): string {
+        if ($this->info) {
+            return 'info.json';
+        }
+        $bounds = $this->getBounds($image);
+        $size   = $this->getSize($image, $service);
+        return $bounds . '/' . $size . '/' . $this->rotation . '/' . $this->quality . '.' . $this->format;
     }
 }

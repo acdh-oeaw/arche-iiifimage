@@ -50,4 +50,16 @@ class ParamFormat {
             throw new RequestParamException("Invalid format parameter value: $format");
         }
     }
+
+    public function __toString(): string {
+        return $this->format;
+    }
+
+    public function getMime(): string {
+        return match ($this->format) {
+            self::PDF => 'application/pdf',
+            self::TIF => 'image/tiff',
+            default => 'image/' . $this->format,
+        };
+    }
 }

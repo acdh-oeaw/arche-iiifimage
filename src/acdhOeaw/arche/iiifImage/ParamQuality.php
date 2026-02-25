@@ -45,4 +45,8 @@ class ParamQuality {
             throw new RequestParamException("Invalid quality parameter value: $quality");
         }
     }
+
+    public function __toString(): string {
+        return $this->quality;
+    }
 }

@@ -33,7 +33,7 @@ namespace acdhOeaw\arche\iiifImage;
  */
 class ParamSize {
 
-    private const VALID = '`^\\^?(max|[!]?[0-9]+,[0-9]+|[0-9]+,|,[0-9]+|pct:[0-9]+([.][0-9]+)?)$`';
+    private const VALID = '`^\\^?(full|max|[!]?[0-9]+,[0-9]+|[0-9]+,|,[0-9]+|pct:[0-9]+([.][0-9]+)?)$`';
 
     private string $sizeOrig;
     private bool $upscale;
@@ -51,7 +51,7 @@ class ParamSize {
             $this->upscale = true;
             $size          = substr($size, 1);
         }
-        if ($size === 'max') {
+        if ($size === 'max' || $size === 'full') {
             $this->width  = PHP_INT_MAX;
             $this->height = PHP_INT_MAX;
         } elseif (str_starts_with($size, 'pct:')) {

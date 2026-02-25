@@ -34,6 +34,7 @@ use acdhOeaw\arche\iiifImage\Size;
 use acdhOeaw\arche\iiifImage\Bounds;
 use acdhOeaw\arche\iiifImage\RequestParamException;
 use acdhOeaw\arche\iiifImage\ImageImagick;
+use acdhOeaw\arche\iiifImage\ImageStub;
 
 /**
  * Description of IiifImageRequestTest

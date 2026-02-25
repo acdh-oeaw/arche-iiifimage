@@ -44,4 +44,8 @@ class Bounds {
         $this->width  = $x1 - $x0;
         $this->height = $y1 - $y0;
     }
+
+    public function __toString(): string {
+        return implode(',', [$this->x0, $this->y0, $this->width, $this->height]);
+    }
 }

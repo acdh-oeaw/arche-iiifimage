@@ -53,4 +53,8 @@ class ParamRotation {
             throw new RequestParamException("Invalid rotation parameter value: $rotation");
         }
     }
+
+    public function __toString(): string {
+        return ($this->mirror ? '!' : '') . $this->angle;
+    }
 }

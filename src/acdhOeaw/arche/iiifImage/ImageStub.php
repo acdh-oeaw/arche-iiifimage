@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-namespace acdhOeaw\arche\iiifImage\tests;
+namespace acdhOeaw\arche\iiifImage;
 
 use acdhOeaw\arche\iiifImage\ImageInterface;
 use acdhOeaw\arche\iiifImage\ServiceConfig;

@@ -133,12 +133,14 @@ class ImageImagick implements ImageInterface {
             }
         }
         // https://imagemagick.org/script/formats.php
-        $format = match ($request->format->format) {
+        $format        = match ($request->format->format) {
             'tif' => 'tiff',
             default => $request->format->format,
         };
         $this->setOutputOptions($format, $cfg);
-        $this->img->writeImage($format . ':' . $targetFile);
+        $targetFileTmp = $targetFile . '_' . rand();
+        $this->img->writeImage($format . ':' . $targetFileTmp);
+        rename($targetFileTmp, $targetFile);
         unset($this->img);
     }
 

@@ -13,7 +13,8 @@
     ],
     "require": {
         "php": "^8.3",
-        "acdh-oeaw/arche-diss-cache": "^1.2.1"
+        "acdh-oeaw/arche-diss-cache": "^1.2.1",
+        "zozlak/http-accept": "^1.0"
     },
     "autoload": {
         "psr-4": {
