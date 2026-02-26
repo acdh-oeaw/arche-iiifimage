@@ -84,6 +84,8 @@ class IiifImageRequest {
                                  ?ServiceConfig $service = null): string {
         if ($this->info) {
             return 'info.json';
+        } elseif ($image === null || $service === null) {
+            throw new \BadMethodCallException("If request is not an info one, then image and service parameters have to be provided");
         }
         $bounds = $this->getBounds($image);
         $size   = $this->getSize($image, $service);

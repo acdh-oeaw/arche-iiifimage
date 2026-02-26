@@ -46,19 +46,17 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
     const SAMPLE_RES_URI = 'https://arche.acdh.oeaw.ac.at/api/997283';
 
     static private Service $service;
-    static private LoggerInterface $log;
     static private object $config;
 
     static public function setUpBeforeClass(): void {
         parent::setUpBeforeClass();
         self::$service = new Service(__DIR__ . '/config.yaml');
-        self::$log     = self::$service->getLog();
         self::$config  = self::$service->getConfig();
     }
 
     public function setUp(): void {
         parent::setUp();
-        $cache = new FileCache(self::$config->cache->dir);
+        $cache = new FileCache(self::$config->cache->dir ?? throw new \RuntimeException("Bad config"));
         $cache->clean(0, FileCache::BY_SIZE);
     }
 
@@ -126,9 +124,9 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
             "profile"          => "level2",
             "height"           => 186,
             "width"            => 162,
-            "maxHeight"        => self::$config->iiifImage->maxHeight,
-            "maxWidth"         => self::$config->iiifImage->maxWidth,
-            "maxArea"          => self::$config->iiifImage->maxArea,
+            "maxHeight"        => self::$config->iiifImage->maxHeight ?? '',
+            "maxWidth"         => self::$config->iiifImage->maxWidth ?? '',
+            "maxArea"          => self::$config->iiifImage->maxArea ?? '',
             "preferredFormats" => ["webp"],
             "rights"           => "https://creativecommons.org/licenses/by/4.0/",
             "extraQualities"   => ["color", "gray", "bitonal"],
@@ -139,9 +137,12 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
                 "sizeByPct", "sizeByW", "sizeByH", "sizeUpscaling"],
             "partOf"           => [
                 [
-                    "id"    => "https://hdl.handle.net/21.11115/0000-0013-BE8D-7",
+                    "id"    => "https://id.acdh.oeaw.ac.at/gustavmahlerarchiv",
                     "type"  => "Dataset",
-                    "label" => "Digitales Archiv der Internationalen Gustav Mahler Gesellschaft",
+                    "label" => [
+                        "de" => ["Digitales Archiv der Internationalen Gustav Mahler Gesellschaft"],
+                        "en" => ["Digital Archive of the International Gustav Mahler Society"],
+                    ],
                 ],
             ],
             "seeAlso"          => [
@@ -149,7 +150,7 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
                     "id"     => $resUri,
                     "type"   => "Image",
                     "label"  => "Source image",
-                    "format" => "{acdh:hasFormat}",
+                    "format" => "image/png",
                 ],
                 [
                     "id"      => "$resUri/metadata?format=text%2Fturtle",
@@ -188,7 +189,7 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         $this->assertEqualsCanonicalizing($refHeaders, $resp1->headers);
 
         // change resource content hash in the metadata
-        $hashProp = DF::namedNode(self::$config->schema->hash);
+        $hashProp = DF::namedNode(self::$config->schema->hash ?? '');
         $meta     = $res->getGraph();
         $meta->delete(new PT($hashProp));
         $meta->add(DF::quadNoSubject($hashProp, DF::literal('sha1:123456789')));
@@ -211,7 +212,7 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         $this->assertEquals(200, $resp1->responseCode);
 
         // change resource content hash in the metadata
-        $hashProp = DF::namedNode(self::$config->schema->hash);
+        $hashProp = DF::namedNode(self::$config->schema->hash ?? '');
         $meta     = $res->getGraph();
         $meta->delete(new PT($hashProp));
         $meta->add(DF::quadNoSubject($hashProp, DF::literal('sha1:123456789')));
@@ -244,7 +245,7 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
     private function getSampleResource(): RepoResource {
         $repo = Repo::factoryFromUrl('https://arche.acdh.oeaw.ac.at/api/');
         $res  = new RepoResource(self::SAMPLE_RES_URI, $repo);
-        $cfg  = self::$config->dissCacheService;
+        $cfg  = self::$config->dissCacheService ?? throw new \RuntimeException("Bad config");
         $res->loadMetadata(true, $cfg->metadataMode, $cfg->parentProperty, $cfg->resourceProperties, $cfg->relativesProperties);
         //echo $res->getGraph()->getDataset();
         return $res;

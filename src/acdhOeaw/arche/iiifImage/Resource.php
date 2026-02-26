@@ -26,7 +26,11 @@
 
 namespace acdhOeaw\arche\iiifImage;
 
+use RuntimeException;
 use Psr\Log\LoggerInterface;
+use rdfInterface\TermInterface;
+use rdfInterface\LiteralInterface;
+use rdfInterface\NamedNodeInterface;
 use quickRdf\DataFactory as DF;
 use termTemplates\PredicateTemplate as PT;
 use termTemplates\QuadTemplate as QT;
@@ -89,8 +93,8 @@ class Resource {
         $this->request       = new IiifImageRequest($iiifRequest);
         $this->config        = $config;
         $this->serviceConfig = new ServiceConfig(
-            $config->iiifImage->maxWidth,
-            $config->iiifImage->maxHeight,
+            $config->iiifImage->maxWidth ?? throw new IiifImageException("Configuration misses iiifImage.maxWidth property"),
+            $config->iiifImage->maxHeight ?? throw new IiifImageException("Configuration misses iiifImage.maxHeight property"),
             $config->iiifImage->backendConfig ?? []
         );
         $this->log           = $log;
@@ -98,12 +102,15 @@ class Resource {
 
     public function getResponse(): ResponseCacheItem {
         $meta         = $this->res->getGraph();
-        $hashProp     = DF::namedNode($this->config->schema->hash);
-        $hashPrevProp = DF::namedNode($this->config->schema->previousHash);
+        $hashProp     = DF::namedNode($this->config->schema->hash ?? '');
+        $hashPrevProp = DF::namedNode($this->config->schema->previousHash ?? '');
         $hashPrevTmpl = new PT($hashPrevProp);
         $hashPrev     = $meta->getObject($hashPrevTmpl);
         $hashCur      = $meta->getObject(new PT($hashProp));
-        $force        = $hashPrev === null || !$hashCur->equals($hashPrev);
+        if ($hashCur === null) {
+            throw new IiifImageException("Unable to find image hash");
+        }
+        $force = $hashPrev === null || !$hashCur->equals($hashPrev);
 
         $imageStub = ImageStub::fromDimensions($this->getWidth(), $this->getHeight(), $this->serviceConfig);
         $canonical = $this->request->getCanonical($imageStub, $this->serviceConfig);
@@ -127,18 +134,19 @@ class Resource {
             'Content-Type' => $this->request->format->getMime(),
         ];
 
-        $cacheDir  = $this->config->cache->dir . '/' . hash(self::HASH, $resUri);
-        $cacheFile = $cacheDir . '/' . hash(self::HASH, $canonical);
+        $cacheDir  = $this->config->cache->dir ?? throw new IiifImageException("Configuration misses cache.dir property");
+        $cacheFile = $cacheDir . '/' . hash(self::HASH, $resUri) . '/' . hash(self::HASH, $canonical);
         if ($force === false && file_exists($cacheFile)) {
             return new ResponseCacheItem($cacheFile, 200, $headers, true, true);
         }
 
-        $srcMime     = $this->res->getGraph()->getObjectValue(new PT(DF::namedNode($this->config->schema->mime)));
+        $mimeProp    = $this->config->schema->mime ?? throw new IiifImageException("Configuration misses schema.mime property");
+        $srcMime     = $this->res->getGraph()->getObjectValue(new PT($mimeProp));
         $localAccess = (array) ($this->config->cache->localAccess ?? []);
         $guzzleOpts  = $this->config->cache->guzzleOpts ?? [];
         $maxDwnldMb  = $this->config->cache->maxDownloadSizeMb ?? self::DEFAULT_MAX_DOWNLOAD_SIZE_MB;
 
-        $this->cache = new FileCache($this->config->cache->dir, $this->log, $localAccess);
+        $this->cache = new FileCache($cacheDir, $this->log, $localAccess);
         $path        = $this->cache->getRefFilePath($resUri, $srcMime, $guzzleOpts, $maxDwnldMb);
         $this->image = new ImageImagick($path, $this->serviceConfig);
         $this->image->transform($cacheFile, $this->request);
@@ -147,7 +155,7 @@ class Resource {
     }
 
     private function getInfo(bool $force): ResponseCacheItem {
-        $iiifInfoProp = DF::namedNode($this->config->schema->iiifInfo);
+        $iiifInfoProp = $this->config->schema->iiifInfo ?? throw new IiifImageException("Configuration misses schema.iiifInfo property");
         $iiifInfoTmpl = new PT($iiifInfoProp);
 
         $meta = $this->res->getGraph();
@@ -174,11 +182,17 @@ class Resource {
     }
 
     private function getInfoBody(): string {
-        $schema          = $this->config->schema;
-        $meta            = $this->res->getGraph();
-        $metaAll         = $meta->getDataset();
-        $resUri          = (string) $this->res->getUri();
-        $body            = [
+        $cfg         = $this->config->iiifImage->info ?? throw new IiifImageException("Configuration misses iiifImage.info section");
+        $schema      = $this->config->schema ?? (object) [];
+        $idProp      = $schema->id ?? throw new IiifImageException("Configuration misses schema.id property");
+        $labelProp   = $schema->label ?? throw new IiifImageException("Configuration misses schema.label property");
+        $parentProp  = $schema->parent ?? throw new IiifImageException("Configuration misses schema.parent property");
+        $mimeProp    = $schema->mime ?? throw new IiifImageException("Configuration misses schema.mime property");
+        $licenseProp = $schema->license ?? throw new IiifImageException("Configuration misses schema.license property");
+
+        $meta   = $this->res->getGraph();
+        $resUri = (string) $this->res->getUri();
+        $body   = [
             "@context"         => self::JSONLD_CONTEXT,
             "id"               => $resUri,
             "type"             => "ImageService3",
@@ -190,8 +204,7 @@ class Resource {
             "maxWidth"         => $this->serviceConfig->maxWidth,
             "maxArea"          => $this->serviceConfig->maxArea,
             "preferredFormats" => ["webp"],
-            //TODO - fetch external URI
-            "rights"           => $meta->getObjectValue(new PT($schema->license)),
+            "rights"           => "",
             "extraQualities"   => ["color", "gray", "bitonal"],
             "extraFormats"     => ["tif", "gif", "pdf", "jp2", "webp"],
             "extraFeatures"    => ["canonicalLinkHeader", "cors", "jsonldMediaType",
@@ -205,7 +218,7 @@ class Resource {
                     "id"     => $resUri,
                     "type"   => "Image",
                     "label"  => "Source image",
-                    "format" => "{acdh:hasFormat}",
+                    "format" => $meta->getObjectValue(new PT($mimeProp)),
                 ],
                 [
                     "id"      => "$resUri/metadata?format=text%2Fturtle",
@@ -225,39 +238,73 @@ class Resource {
             //  ["width"=>256, "scaleFactors": [1, 2, 4]]
             //]
         ];
-        $parentIdTmpl    = new QT(null, $schema->id);
-        $parentLabelTmpl = new QT(null, $schema->label);
-        foreach ($meta->listObjects(new PT($this->config->schema->parent)) as $parent) {
+
+        $licenseSbj = $meta->getObject(new PT($licenseProp));
+        if ($licenseSbj === null) {
+            throw new IiifImageException("Unable to find image license");
+        }
+        $body['rights'] = $this->getMetadataValue($licenseSbj, $idProp, false, $cfg->rightsRegex ?? '');
+
+        foreach ($meta->listObjects(new PT($parentProp)) as $parent) {
             $body['partOf'][] = [
-                'id'    => $metaAll->getObjectValue($parentIdTmpl->withSubject($parent)),
+                'id'    => $this->getMetadataValue($parent, $idProp, false, $cfg->idRegex ?? ''),
                 'type'  => 'Dataset',
-                'label' => $metaAll->getObjectValue($parentLabelTmpl->withSubject($parent)),
+                'label' => $this->getMetadataValue($parent, $labelProp, true),
             ];
         }
+
         return (string) json_encode($body, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
     private function getWidth(): int {
         static $width = null;
-        $width        ??= (int) $this->res->getGraph()->getObjectValue(new PT(DF::namedNode($this->config->schema->width)));
+        if ($width === null) {
+            $widthProp = $this->config->schema->width ?? throw new IiifImageException("Configuration misses schema.width property");
+            $width     = (int) $this->res->getGraph()->getObjectValue($widthProp);
+        }
         return $width;
     }
 
     private function getHeight(): int {
         static $height = null;
-        $height        ??= (int) $this->res->getGraph()->getObjectValue(new PT(DF::namedNode($this->config->schema->height)));
+        if ($height === null) {
+            $heightProp = $this->config->schema->height ?? throw new IiifImageException("Configuration misses schema.height property");
+            $height     = (int) $this->res->getGraph()->getObjectValue(new PT($heightProp));
+        }
         return $height;
     }
 
     private function addHeaders(ResponseCacheItem $response, string $canonical): ResponseCacheItem {
-        $canonical = $this->config->iiifImage->baseUrl .
-            urlencode($this->res->getUri()) .
-            '/' . $canonical;
+        $baseUrl   = $this->config->iiifImage->baseUrl ?? throw new IiifImageException("Configuration misses iiifImage.baseUrl property");
+        $canonical = $baseUrl . urlencode($this->res->getUri()) . '/' . $canonical;
 
         $response->headers['Link'] = [
             '<http://iiif.io/api/image/3/level2.json>;rel="profile"',
             $canonical . ';rel="canonical"',
         ];
         return $response;
+    }
+
+    /**
+     * 
+     * @return array<string, array<string>>|string
+     */
+    private function getMetadataValue(TermInterface $sbj,
+                                      string | NamedNodeInterface $property,
+                                      bool $lang, string $regex = ''): array | string {
+        $tmpl   = new QT($sbj, $property);
+        $values = iterator_to_array($this->res->getGraph()->getDataset()->listObjects($tmpl));
+        if (!empty($regex)) {
+            $values = array_filter($values, fn($x) => (bool) preg_match($regex, (string) $x));
+        }
+        if (!$lang) {
+            return (string) reset($values);
+        }
+        $ret = [];
+        foreach ($values as $i) {
+            $key       = $i instanceof LiteralInterface ? $i->getLang() : '';
+            $ret[$key] = [(string) $i];
+        }
+        return $ret;
     }
 }
