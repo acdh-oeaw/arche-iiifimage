@@ -102,8 +102,8 @@ class Resource {
 
     public function getResponse(): ResponseCacheItem {
         $meta         = $this->res->getGraph();
-        $hashProp     = DF::namedNode($this->config->schema->hash ?? '');
-        $hashPrevProp = DF::namedNode($this->config->schema->previousHash ?? '');
+        $hashProp     = DF::namedNode($this->config->schema->hash ?? throw new IiifImageException("Configuration misses schema.hash property"));
+        $hashPrevProp = DF::namedNode($this->config->schema->previousHash ?? throw new IiifImageException("Configuration misses schema.previousHash property"));
         $hashPrevTmpl = new PT($hashPrevProp);
         $hashPrev     = $meta->getObject($hashPrevTmpl);
         $hashCur      = $meta->getObject(new PT($hashProp));
@@ -164,7 +164,7 @@ class Resource {
         if ($force || $body === null) {
             $body = $this->getInfoBody();
             $meta->delete($iiifInfoTmpl);
-            $meta->add(DF::quadNoSubject($iiifInfoProp, DF::literal($body)));
+            $meta->add(DF::quadNoSubject(DF::namedNode($iiifInfoProp), DF::literal($body)));
             $hit  = false;
         }
 
@@ -260,7 +260,7 @@ class Resource {
         static $width = null;
         if ($width === null) {
             $widthProp = $this->config->schema->width ?? throw new IiifImageException("Configuration misses schema.width property");
-            $width     = (int) $this->res->getGraph()->getObjectValue($widthProp);
+            $width     = (int) $this->res->getGraph()->getObjectValue(new PT($widthProp));
         }
         return $width;
     }

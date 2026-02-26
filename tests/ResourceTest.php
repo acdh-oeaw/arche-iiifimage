@@ -26,13 +26,12 @@
 
 namespace acdhOeaw\arche\iiifImage\tests;
 
-use Psr\Log\LoggerInterface;
+use RuntimeException;
 use quickRdf\DataFactory as DF;
 use termTemplates\PredicateTemplate as PT;
 use acdhOeaw\arche\lib\Repo;
 use acdhOeaw\arche\lib\RepoResource;
 use acdhOeaw\arche\lib\dissCache\Service;
-use acdhOeaw\arche\lib\dissCache\CachePdo;
 use acdhOeaw\arche\lib\dissCache\FileCache;
 use acdhOeaw\arche\iiifImage\Resource;
 
@@ -52,11 +51,16 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         parent::setUpBeforeClass();
         self::$service = new Service(__DIR__ . '/config.yaml');
         self::$config  = self::$service->getConfig();
+
+        $cacheDir = self::$config->cache->dir ?? throw new RuntimeException("Bad config");
+        if (!file_exists($cacheDir)) {
+            mkdir($cacheDir, 0700, true);
+        }
     }
 
     public function setUp(): void {
         parent::setUp();
-        $cache = new FileCache(self::$config->cache->dir ?? throw new \RuntimeException("Bad config"));
+        $cache = new FileCache(self::$config->cache->dir ?? throw new RuntimeException("Bad config"));
         $cache->clean(0, FileCache::BY_SIZE);
     }
 
@@ -238,14 +242,15 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         Resource::cacheHandler($res, ['info.json'], self::$config);
     }
 
-    public function testAuth(): void {
-        
-    }
+//    TODO
+//    public function testAuth(): void {
+//        
+//    }
 
     private function getSampleResource(): RepoResource {
         $repo = Repo::factoryFromUrl('https://arche.acdh.oeaw.ac.at/api/');
         $res  = new RepoResource(self::SAMPLE_RES_URI, $repo);
-        $cfg  = self::$config->dissCacheService ?? throw new \RuntimeException("Bad config");
+        $cfg  = self::$config->dissCacheService ?? throw new RuntimeException("Bad config");
         $res->loadMetadata(true, $cfg->metadataMode, $cfg->parentProperty, $cfg->resourceProperties, $cfg->relativesProperties);
         //echo $res->getGraph()->getDataset();
         return $res;
