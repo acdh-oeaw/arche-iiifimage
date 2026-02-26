@@ -41,7 +41,7 @@ $config = $service->getConfig();
 $clbck  = fn($res, $param) => Resource::cacheHandler($res, $param, $config, $log);
 $service->setCallback($clbck);
 
-list($id, $transform) = Resource::parseRequestUri($config->iiifImage->baseUrl);
-$response = $service->serveRequest($id, [$tranform]);
+list($id, $transform) = Resource::parseRequestUri($config->iiifImage->baseUrl ?? '');
+$response = $service->serveRequest($id, [$tranform ?? '']);
 $response->send();
 $log->info("Response served in " . round(microtime(true) - $t0, 3) . " s");
