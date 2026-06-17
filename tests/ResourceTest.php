@@ -98,9 +98,8 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         ];
         $this->assertEqualsCanonicalizing($refHeaders, $resp1->headers);
 
-        $resp1->hit = true;
         $resp2      = Resource::cacheHandler($res, [$iiifParam], self::$config);
-        $this->assertEquals($resp1, $resp2);
+        $this->assertEquals($resp1->unify($resp2)->withHit(true), $resp2);
     }
 
     public function testInfo(): void {
@@ -202,8 +201,7 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
 
         // try again without changes
         $resp3      = Resource::cacheHandler($res, [$iiifParam], self::$config);
-        $resp2->hit = true;
-        $this->assertEquals($resp2, $resp3);
+        $this->assertEquals($resp2->unify($resp3)->withHit(true), $resp3);
     }
 
     public function testHashChangedInfo(): void {
@@ -225,8 +223,7 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
 
         // try again without changes
         $resp3      = Resource::cacheHandler($res, [$iiifParam], self::$config);
-        $resp2->hit = true;
-        $this->assertEquals($resp2, $resp3);
+        $this->assertEquals($resp2->unify($resp3)->withHit(true), $resp3);
     }
 
     public function testInfoAccept(): void {

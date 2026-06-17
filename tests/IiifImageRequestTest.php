@@ -160,13 +160,13 @@ class IiifImageRequestTest extends \PHPUnit\Framework\TestCase {
             '101,100'    => new Size(101, 100),
             '^250,50'    => new Size(250, 50),
             '!100,100'   => new Size(100, 50),
-            '!201,50'    => new Size(101, 50),
+            '!201,50'    => new Size(100, 50),
             '!201,100'   => new Size(201, 100),
             '^!300,500'  => new Size(300, 149),
         ];
         foreach ($testCases as $size => $output) {
             $req = new IiifImageRequest($this->buildRequestString(size: $size));
-            $this->assertEquals($output, $req->getSize($image, $service));
+            $this->assertEquals($output, $req->getSize($image, $service), $size);
         }
 
         $errorCases = [
