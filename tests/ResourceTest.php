@@ -70,14 +70,14 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
             'full/max/90/default.jpg',
         ];
         $this->assertEquals($ref, Resource::parseRequestUri('', 'https://id.acdh.oeaw.ac.at/foo/bar/full/max/90/default.jpg'));
-        $this->assertEquals($ref, Resource::parseRequestUri('https://base/url/', 'https://base/url/id.acdh.oeaw.ac.at/foo/bar/full/max/90/default.jpg'));
+        $this->assertEquals($ref, Resource::parseRequestUri('/base/path/', '/base/path/id.acdh.oeaw.ac.at/foo/bar/full/max/90/default.jpg'));
 
         $ref = [
             '12345',
             'square/pct:40/45/gray.jpg',
         ];
         $this->assertEquals($ref, Resource::parseRequestUri('', '12345/square/pct:40/45/gray.jpg'));
-        $this->assertEquals($ref, Resource::parseRequestUri('https://base/url/', 'https://base/url/12345/square/pct:40/45/gray.jpg'));
+        $this->assertEquals($ref, Resource::parseRequestUri('/base/path/', '/base/path/12345/square/pct:40/45/gray.jpg'));
     }
 
     public function testImage(): void {

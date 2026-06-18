@@ -55,10 +55,10 @@ class Resource {
      *   resource identifier and second element being IIIF Image API transform
      *   parameters
      */
-    static public function parseRequestUri(string $baseUri,
+    static public function parseRequestUri(string $basePath,
                                            string | null $requestUri = null): array {
         $requestUri ??= $_SERVER['REQUEST_URI'];
-        $allParam   = explode('/', substr($requestUri, strlen($baseUri)));
+        $allParam   = explode('/', substr($requestUri, strlen($basePath)));
         $id         = implode('/', array_slice($allParam, 0, count($allParam) - 4));
         if (!is_numeric($id) && !str_starts_with($id, 'http')) {
             $id = 'https://' . $id;

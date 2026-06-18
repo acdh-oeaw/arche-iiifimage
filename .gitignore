@@ -5,3 +5,4 @@
 /build/docroot
 /build/logs
 /tests/output.*
+/config.yaml
