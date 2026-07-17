@@ -40,7 +40,7 @@ $config = $service->getConfig();
 $clbck  = fn($res, $param, $responseCache) => Resource::cacheHandler($res, $param, $config, $responseCache);
 $service->setCallback($clbck);
 
-list($id, $transform) = Resource::parseRequestUri($config->iiifImage->basePath ?? '');
+list($id, $transform) = Resource::parseRequestUri($config->iiifImage->basePath ?? '/');
 $response = $service->serveRequest($id, [$transform]);
 if (in_array($response->responseCode, [401, 403])) {
     $response = $service->serveRequest($config->iiifImage->unauthorizedImageUri ?? '', [$transform]);

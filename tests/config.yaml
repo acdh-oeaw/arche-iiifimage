@@ -35,6 +35,7 @@ dissCacheService:
   - https://vocabs.acdh.oeaw.ac.at/schema#hasTitle
 iiifImage:
   baseUrl: https://arche-iiifimage.acdh.oeaw.ac.at/
+  basePath: /
   maxWidth: 3000
   maxHeight: 3000
   maxArea: 9000000
