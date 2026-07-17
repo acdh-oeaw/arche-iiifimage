@@ -14,4 +14,3 @@ RUN cd /var/www/html &&\
 EXPOSE 80
 ENTRYPOINT ["entrypoint.sh"]
 RUN apt update && apt install -y vim
-

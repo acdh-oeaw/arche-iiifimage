@@ -2,11 +2,12 @@ dissCacheService:
   db: sqlite:/var/www/html/db_image.sqlite
   dbId: image
   log:
-    file: /var/www/html/log_image
+    file: /var/www/html/log
     level: debug
   ttl:
     resource: 3600     # 1 hour
     response: 31536000 # 1 year
+  maxCount: 100000
   repoDb:
   - archeProd.yaml
   - archeCur.yaml
@@ -28,28 +29,41 @@ dissCacheService:
   - https://vocabs.acdh.oeaw.ac.at/schema#hasRawBinarySize
   - https://vocabs.acdh.oeaw.ac.at/schema#hasHash
   - https://vocabs.acdh.oeaw.ac.at/schema#isPartOf
+  - https://vocabs.acdh.oeaw.ac.at/schema#aclRead
   relativesProperties:
   - https://vocabs.acdh.oeaw.ac.at/schema#hasIdentifier
   - https://vocabs.acdh.oeaw.ac.at/schema#hasTitle
 iiifImage:
   baseUrl: https://arche-iiifimage.acdh.oeaw.ac.at/
-  maxWidth: 3000
-  maxHeight: 3000
-  maxArea: 9000000
+  maxWidth: 5000
+  maxHeight: 5000
+  maxArea: 25000000
   backendConfig: ~
   info:
     idRegex: "`^https://id.acdh.oeaw.ac.at/`"
     rightsRegex: "`^(?!https://arche|https://id.acdh.oeaw.ac.at/|https://vocabs.acdh.oeaw.ac.at/)`"
-cache:
+  unauthorizedImageUri: https://id.acdh.oeaw.ac.at/dissemination/loris/unauthorizedImage.png
+fileCache:
   dir: cache
   maxSizeMb: 1000
   clearMode: time
   maxDownloadSizeMb: 100
-  guzzleOpts: []
+  mimeProperty: https://vocabs.acdh.oeaw.ac.at/schema#hasFormat
   localAccess:
     https://local.access/:
       level: 1
       dir: tests/data
+auth:
+  aclReadProperty: https://vocabs.acdh.oeaw.ac.at/schema#aclRead
+  publicRole: public
+  academicRole: academic
+  roleTrustedHeader: academic
+  adminRole: admin
+  ttl: 300
+  # see https://www.php.net/manual/en/function.password-hash.php
+  passwordCost: 10
+  passBasicAuth: false
+  defaultAuth: ['', '']
 schema:
   width: https://vocabs.acdh.oeaw.ac.at/schema#hasPixelWidth
   height: https://vocabs.acdh.oeaw.ac.at/schema#hasPixelHeight
@@ -60,4 +74,3 @@ schema:
   hash: https://vocabs.acdh.oeaw.ac.at/schema#hasHash
   previousHash: __previous_hash__
   iiifInfo: __info__
-    

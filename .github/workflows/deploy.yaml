@@ -10,8 +10,7 @@ on:
   release:
     types: [published]
 env:
-  RANCHER_PROJECT: Dissemination services
-  RANCHER_NAMESPACE: arche-iiifimage
+  IMAGE_NAME: arche-iiifimage
 jobs:
   testAndDeploy:
     runs-on: ubuntu-latest
@@ -24,20 +23,31 @@ jobs:
       - name: build docker image
         run: |
           mkdir build/docroot && cp -R `ls -1 | grep -v ^build` build/docroot/ && cp build/config/arche.yaml build/docroot/config.yaml
-          docker build --rm -t "acdhch/$RANCHER_NAMESPACE:latest" --build-arg VARIANT=production --label "buildUrl=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" build
+          docker build --rm -t "acdhch/$IMAGE_NAME:latest" --build-arg VARIANT=production --label "buildUrl=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" build
       - name: test image
+        env:
+          ARCHE_LOGIN: ${{ secrets.ARCHE_LOGIN }} 
+          ARCHE_PSWD: ${{ secrets.ARCHE_PSWD }}
         run: |
           composer update
-          vendor/bin/yaml-edit.php --src build/config/arche.yaml --src '{"dissCacheService": {"repoDb": []}, ""}' config.yaml
-          docker run -d --name "$RANCHER_NAMESPACE" -v `pwd`/config.yaml:/var/www/html/config.yaml -p 8080:80 "acdhch/$RANCHER_NAMESPACE:latest"
+          vendor/bin/yaml-edit.php --src build/config/arche.yaml --src "{\"dissCacheService\": {\"repoDb\": []}, \"auth\": {\"defaultAuth\": [\"$ARCHE_LOGIN\", \"$ARCHE_PSWD\"]}}" config.yaml
+          docker run -d --name "$IMAGE_NAME" -v `pwd`/config.yaml:/var/www/html/config.yaml -p 8080:80 "acdhch/$IMAGE_NAME:latest"
           sleep 3
-          curl -f -i 'http://127.0.0.1:8080/https://hdl.handle.net/21.11115/0000-0016-DC89-6/full/max/0/default.webp' > /dev/null
+          # normal image
+          curl -f 'http://127.0.0.1:8080/https://hdl.handle.net/21.11115/0000-0016-DC89-6/full/max/0/default.webp' > /tmp/test.webp && \
+            file /tmp/test.webp | grep 'Web/P image, XMP metadata, 1983+1x1487+1'
+          # restricted accees with no auth - fallback image
+          curl -f 'http://127.0.0.1:8080/https://arche.acdh.oeaw.ac.at/api/347608/full/max/0/default.png' > /tmp/test.png && \
+            file /tmp/test.png | grep 'PNG image data, 1000 x 1000, 8-bit grayscale, non-interlaced'
+          # restricted access with authorization
+          curl -f -u "$ARCHE_LOGIN:$ARCHE_PSWD" 'http://127.0.0.1:8080/https://arche.acdh.oeaw.ac.at/api/347608/full/max/0/default.webp' > /tmp/test.webp && \
+            file /tmp/test.webp | grep 'Web/P image, XMP metadata, 431+1x462+1'
       - uses: acdh-oeaw/arche_cicd_finish_action@main
         with:
           pushAndRedeploy: ${{ github.event_name == 'release' && github.event.action == 'published' || inputs.deploy }}
           dockerhubLogin: ${{ secrets.DOCKER_USERNAME }}
           dockerhubPassword: ${{ secrets.DOCKER_PASSWORD }}
-          imageName: $RANCHER_NAMESPACE
+          imageName: $IMAGE_NAME
           rancherProject: 
           rancherNamespace: 
           kubectlConfig: 
