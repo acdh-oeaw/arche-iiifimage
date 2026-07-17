@@ -1,0 +1,14 @@
+@prefix acdh: <https://vocabs.acdh.oeaw.ac.at/schema#> .
+@prefix acdhi: <https://id.acdh.oeaw.ac.at/> .
+
+<https://id.acdh.oeaw.ac.at/dissemination/loris/unauthorizedImage.png> a acdh:Resource ;
+  acdh:hasTitle "unauthorizedImage.png"@und ;
+  acdh:hasFormat "image/tiff" ;
+  acdh:hasDescription "Image serverd by the IIIF image API dissemination service instead of restricted-access images."@en ;
+  acdh:hasCategory <https://vocabs.acdh.oeaw.ac.at/archecategory/image> ;
+  acdh:hasMetadataCreator acdhi:mzoltak ;
+  acdh:hasDepositor acdhi:mzoltak ;
+  acdh:hasRightsHolder acdhi:mzoltak ;
+  acdh:hasLicensor acdhi:mzoltak ;
+  acdh:hasLicense <https://vocabs.acdh.oeaw.ac.at/archelicenses/cc0-1-0> ;
+  acdh:isPartOf <https://id.acdh.oeaw.ac.at/dissemination/loris>.
