@@ -31,7 +31,7 @@ jobs:
           ARCHE_PSWD: ${{ secrets.ARCHE_PSWD }}
         run: |
           composer update
-          vendor/bin/yaml-edit.php --src build/config/arche.yaml --src "{\"dissCacheService\": {\"repoDb\": []}, \"auth\": {\"defaultAuth\": [\"$ARCHE_LOGIN\", \"$ARCHE_PSWD\"]}}" config.yaml
+          vendor/bin/yaml-edit.php --src build/config/arche.yaml --src "{\"dissCacheService\": {\"repoDb\": []}, \"auth\": {\"defaultAuth\": [\"$ARCHE_LOGIN\", \"$ARCHE_PSWD\"]}, \"fileCache\": {\"localAccess\": []}}" config.yaml
           docker run -d --name "$IMAGE_NAME" -v `pwd`/config.yaml:/var/www/html/config.yaml -p 8080:80 "acdhch/$IMAGE_NAME:latest"
           sleep 3
           # normal image

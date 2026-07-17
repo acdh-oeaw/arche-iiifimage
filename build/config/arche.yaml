@@ -51,9 +51,9 @@ fileCache:
   maxDownloadSizeMb: 100
   mimeProperty: https://vocabs.acdh.oeaw.ac.at/schema#hasFormat
   localAccess:
-    https://local.access/:
-      level: 1
-      dir: tests/data
+    https://arche.acdh.oeaw.ac.at/api/:
+      level: 2
+      dir: /arche
 auth:
   aclReadProperty: https://vocabs.acdh.oeaw.ac.at/schema#aclRead
   publicRole: public
