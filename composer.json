@@ -13,8 +13,9 @@
     ],
     "require": {
         "php": "^8.3",
-        "acdh-oeaw/arche-diss-cache": "^2.2.1",
-        "zozlak/http-accept": "^1.0"
+        "acdh-oeaw/arche-diss-cache": "^3.0.9",
+        "zozlak/http-accept": "^1.0",
+        "zozlak/yaml-merge": "^1.0"
     },
     "autoload": {
         "psr-4": {
@@ -23,8 +24,7 @@
     },
     "require-dev": {
         "phpunit/phpunit": "*",
-        "phpstan/phpstan": "*",
-        "zozlak/yaml-merge": "^1.0"
+        "phpstan/phpstan": "*"
     },
     "autoload-dev": {
         "psr-4": {

@@ -36,7 +36,7 @@ use termTemplates\PredicateTemplate as PT;
 use termTemplates\QuadTemplate as QT;
 use zozlak\httpAccept\Accept;
 use acdhOeaw\arche\lib\dissCache\ResponseCacheItem;
-use acdhOeaw\arche\lib\dissCache\FileCache;
+use acdhOeaw\arche\lib\dissCache\CallbackContextInterface;
 use acdhOeaw\arche\lib\RepoResourceInterface;
 
 /**
@@ -46,9 +46,8 @@ use acdhOeaw\arche\lib\RepoResourceInterface;
  */
 class Resource {
 
-    const JSONLD_CONTEXT               = 'http://iiif.io/api/image/3/context.json';
-    const HASH                         = 'xxh128';
-    const DEFAULT_MAX_DOWNLOAD_SIZE_MB = 50;
+    const JSONLD_CONTEXT = 'http://iiif.io/api/image/3/context.json';
+    const HASH           = 'xxh128';
 
     /**
      * @return array{0: string, 1: string} list with first element being requested
@@ -66,7 +65,7 @@ class Resource {
         $tranform = implode('/', array_slice($allParam, count($allParam) - 4));
         return [$id, $tranform];
     }
-
+    
     /**
      * Gets the requested repository resource metadata and converts it to the thumbnail's
      * service ResourceMeta object.
@@ -75,29 +74,30 @@ class Resource {
      */
     static public function cacheHandler(RepoResourceInterface $res,
                                         array $param, object $config,
-                                        ?LoggerInterface $log = null): ResponseCacheItem {
-        return (new self($res, $param[0] ?? '', $config, $log))->getResponse();
+                                        CallbackContextInterface $context): ResponseCacheItem {
+        return (new self($res, $param[0] ?? '', $config, $context))->getResponse();
     }
 
     private RepoResourceInterface $res;
     private IiifImageRequest $request;
     private object $config;
     private ServiceConfig $serviceConfig;
-    private FileCache $cache;
     private ImageImagick $image;
+    private CallbackContextInterface $context;
     private LoggerInterface | null $log;
 
     public function __construct(RepoResourceInterface $res, string $iiifRequest,
-                                object $config, ?LoggerInterface $log = null) {
+                                object $config, CallbackContextInterface $context) {
         $this->res           = $res;
         $this->request       = new IiifImageRequest($iiifRequest);
         $this->config        = $config;
+        $this->context = $context;
         $this->serviceConfig = new ServiceConfig(
             $config->iiifImage->maxWidth ?? throw new IiifImageException("Configuration misses iiifImage.maxWidth property"),
             $config->iiifImage->maxHeight ?? throw new IiifImageException("Configuration misses iiifImage.maxHeight property"),
             $config->iiifImage->backendConfig ?? []
         );
-        $this->log           = $log;
+        $this->log           = $context->getLog();
     }
 
     public function getResponse(): ResponseCacheItem {
@@ -110,7 +110,7 @@ class Resource {
         if ($hashCur === null) {
             throw new IiifImageException("Unable to find image hash");
         }
-        $force = $hashPrev === null || !$hashCur->equals($hashPrev);
+        $force = $hashPrev === null || !$hashCur->equals($hashPrev) || $this->context->getNoCache();
 
         $imageStub = ImageStub::fromDimensions($this->getWidth(), $this->getHeight(), $this->serviceConfig);
         $canonical = $this->request->getCanonical($imageStub, $this->serviceConfig);
@@ -134,20 +134,14 @@ class Resource {
             'Content-Type' => $this->request->format->getMime(),
         ];
 
-        $cacheDir  = $this->config->cache->dir ?? throw new IiifImageException("Configuration misses cache.dir property");
+        $cacheDir  = $this->config->fileCache->dir ?? throw new IiifImageException("Configuration misses cache.dir property");
         $cacheFile = $cacheDir . '/' . hash(self::HASH, $resUri) . '/' . hash(self::HASH, $canonical);
         if ($force === false && file_exists($cacheFile)) {
             return new ResponseCacheItem($cacheFile, 200, $headers, true, true);
         }
 
-        $mimeProp    = $this->config->schema->mime ?? throw new IiifImageException("Configuration misses schema.mime property");
-        $srcMime     = $this->res->getGraph()->getObjectValue(new PT($mimeProp));
-        $localAccess = (array) ($this->config->cache->localAccess ?? []);
-        $guzzleOpts  = $this->config->cache->guzzleOpts ?? [];
-        $maxDwnldMb  = $this->config->cache->maxDownloadSizeMb ?? self::DEFAULT_MAX_DOWNLOAD_SIZE_MB;
-
-        $this->cache = new FileCache($cacheDir, $this->log, $localAccess);
-        $path        = $this->cache->getRefFilePath($resUri, $srcMime, $guzzleOpts, $maxDwnldMb);
+        $path        = $this->context->getFileCache()->getResourceBinaryPath($this->res, $this->context->getNoCache());
+        $this->log?->info("Transforming $resUri ($path) into $cacheFile");
         $this->image = new ImageImagick($path, $this->serviceConfig);
         $this->image->transform($cacheFile, $this->request);
 
@@ -303,7 +297,7 @@ class Resource {
         $ret = [];
         foreach ($values as $i) {
             $key       = $i instanceof LiteralInterface ? $i->getLang() : '';
-            $ret[$key] = [(string) $i];
+            $ret[(string) $key] = [(string) $i];
         }
         return $ret;
     }

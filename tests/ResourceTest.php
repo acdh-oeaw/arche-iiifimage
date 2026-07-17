@@ -33,6 +33,7 @@ use acdhOeaw\arche\lib\Repo;
 use acdhOeaw\arche\lib\RepoResource;
 use acdhOeaw\arche\lib\dissCache\Service;
 use acdhOeaw\arche\lib\dissCache\FileCache;
+use acdhOeaw\arche\lib\dissCache\CallbackContextStub;
 use acdhOeaw\arche\iiifImage\Resource;
 
 /**
@@ -46,13 +47,16 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
 
     static private Service $service;
     static private object $config;
+    static private CallbackContextStub $context;
 
     static public function setUpBeforeClass(): void {
         parent::setUpBeforeClass();
-        self::$service = new Service(__DIR__ . '/config.yaml');
-        self::$config  = self::$service->getConfig();
+        self::$service            = new Service(__DIR__ . '/config.yaml');
+        self::$config             = self::$service->getConfig();
+        self::$context            = new CallbackContextStub();
+        self::$context->fileCache = FileCache::fromConfig(self::$config->fileCache ?? throw new RuntimeException("Bad config"));
 
-        $cacheDir = self::$config->cache->dir ?? throw new RuntimeException("Bad config");
+        $cacheDir = self::$config->fileCache->dir ?? throw new RuntimeException("Bad config");
         if (!file_exists($cacheDir)) {
             mkdir($cacheDir, 0700, true);
         }
@@ -60,7 +64,7 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
 
     public function setUp(): void {
         parent::setUp();
-        $cache = new FileCache(self::$config->cache->dir ?? throw new RuntimeException("Bad config"));
+        $cache = FileCache::fromConfig(self::$config->fileCache ?? throw new RuntimeException("Bad config"));
         $cache->clean(0, FileCache::BY_SIZE);
     }
 
@@ -84,7 +88,7 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         $res       = $this->getSampleResource();
         $iiifParam = 'full/max/0/default.webp';
 
-        $resp1      = Resource::cacheHandler($res, [$iiifParam], self::$config);
+        $resp1      = Resource::cacheHandler($res, [$iiifParam], self::$config, self::$context);
         $this->assertFalse($resp1->hit);
         $this->assertTrue($resp1->file);
         $this->assertFileExists($resp1->body);
@@ -98,7 +102,7 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         ];
         $this->assertEqualsCanonicalizing($refHeaders, $resp1->headers);
 
-        $resp2      = Resource::cacheHandler($res, [$iiifParam], self::$config);
+        $resp2 = Resource::cacheHandler($res, [$iiifParam], self::$config, self::$context);
         $this->assertEquals($resp1->unify($resp2)->withHit(true), $resp2);
     }
 
@@ -106,7 +110,7 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         $res        = $this->getSampleResource();
         $resUri     = (string) $res->getUri();
         $iiifParam  = 'info.json';
-        $resp1      = Resource::cacheHandler($res, [$iiifParam], self::$config);
+        $resp1      = Resource::cacheHandler($res, [$iiifParam], self::$config, self::$context);
         $resp1Body  = json_decode($resp1->body, true);
         $this->assertFalse($resp1->hit);
         $this->assertFalse($resp1->file);
@@ -166,7 +170,7 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         ];
         $this->assertEqualsCanonicalizing($refBody, $resp1Body);
 
-        $resp2 = Resource::cacheHandler($res, [$iiifParam], self::$config);
+        $resp2 = Resource::cacheHandler($res, [$iiifParam], self::$config, self::$context);
         $this->assertTrue($resp2->hit);
         $this->assertFalse($resp2->file);
         $this->assertEquals(200, $resp2->responseCode);
@@ -177,7 +181,7 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         $res       = $this->getSampleResource();
         $iiifParam = 'full/max/0/default.webp';
 
-        $resp1      = Resource::cacheHandler($res, [$iiifParam], self::$config);
+        $resp1      = Resource::cacheHandler($res, [$iiifParam], self::$config, self::$context);
         $this->assertFalse($resp1->hit);
         $this->assertTrue($resp1->file);
         $this->assertFileExists($resp1->body);
@@ -196,11 +200,11 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         $meta     = $res->getGraph();
         $meta->delete(new PT($hashProp));
         $meta->add(DF::quadNoSubject($hashProp, DF::literal('sha1:123456789')));
-        $resp2    = Resource::cacheHandler($res, [$iiifParam], self::$config);
+        $resp2    = Resource::cacheHandler($res, [$iiifParam], self::$config, self::$context);
         $this->assertEquals($resp1, $resp2);
 
         // try again without changes
-        $resp3      = Resource::cacheHandler($res, [$iiifParam], self::$config);
+        $resp3 = Resource::cacheHandler($res, [$iiifParam], self::$config, self::$context);
         $this->assertEquals($resp2->unify($resp3)->withHit(true), $resp3);
     }
 
@@ -208,7 +212,7 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         $res       = $this->getSampleResource();
         $iiifParam = 'info.json';
 
-        $resp1 = Resource::cacheHandler($res, [$iiifParam], self::$config);
+        $resp1 = Resource::cacheHandler($res, [$iiifParam], self::$config, self::$context);
         $this->assertFalse($resp1->hit);
         $this->assertFalse($resp1->file);
         $this->assertEquals(200, $resp1->responseCode);
@@ -218,11 +222,11 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         $meta     = $res->getGraph();
         $meta->delete(new PT($hashProp));
         $meta->add(DF::quadNoSubject($hashProp, DF::literal('sha1:123456789')));
-        $resp2    = Resource::cacheHandler($res, [$iiifParam], self::$config);
+        $resp2    = Resource::cacheHandler($res, [$iiifParam], self::$config, self::$context);
         $this->assertEquals($resp1, $resp2);
 
         // try again without changes
-        $resp3      = Resource::cacheHandler($res, [$iiifParam], self::$config);
+        $resp3 = Resource::cacheHandler($res, [$iiifParam], self::$config, self::$context);
         $this->assertEquals($resp2->unify($resp3)->withHit(true), $resp3);
     }
 
@@ -230,19 +234,14 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         $res = $this->getSampleResource();
 
         $_SERVER['HTTP_ACCEPT'] = 'application/json';
-        $resp                   = Resource::cacheHandler($res, ['info.json'], self::$config);
+        $resp                   = Resource::cacheHandler($res, ['info.json'], self::$config, self::$context);
         $this->assertEquals('application/json', $resp->headers['Content-Type'] ?? '');
 
         $_SERVER['HTTP_ACCEPT'] = 'text/plain';
         $this->expectException(\zozlak\httpAccept\NoMatchException::class);
         $this->expectExceptionCode(406);
-        Resource::cacheHandler($res, ['info.json'], self::$config);
+        Resource::cacheHandler($res, ['info.json'], self::$config, self::$context);
     }
-
-//    TODO
-//    public function testAuth(): void {
-//        
-//    }
 
     private function getSampleResource(): RepoResource {
         $repo = Repo::factoryFromUrl('https://arche.acdh.oeaw.ac.at/api/');

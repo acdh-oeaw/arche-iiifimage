@@ -36,12 +36,14 @@ $t0 = microtime(true);
 
 $service = new Service(__DIR__ . '/config.yaml');
 
-$log    = $service->getLog();
 $config = $service->getConfig();
-$clbck  = fn($res, $param) => Resource::cacheHandler($res, $param, $config, $log);
+$clbck  = fn($res, $param, $responseCache) => Resource::cacheHandler($res, $param, $config, $responseCache);
 $service->setCallback($clbck);
 
 list($id, $transform) = Resource::parseRequestUri($config->iiifImage->basePath ?? '');
 $response = $service->serveRequest($id, [$transform]);
+if (in_array($response->responseCode, [401, 403])) {
+    $response = $service->serveRequest($config->iiifImage->unauthorizedImageUri ?? '', [$transform]);
+}
 $response->send();
-$log->info("Response served in " . round(microtime(true) - $t0, 3) . " s");
+$service->getLog()->info("Response served in " . round(microtime(true) - $t0, 3) . " s");
