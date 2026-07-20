@@ -58,14 +58,17 @@ class Resource {
                                            string | null $requestUri = null): array {
         $requestUri ??= $_SERVER['REQUEST_URI'];
         $allParam   = explode('/', substr($requestUri, strlen($basePath)));
-        $id         = implode('/', array_slice($allParam, 0, count($allParam) - 4));
+        $offset     = end($allParam) === 'info.json' ? 1 : 4;
+        $id         = implode('/', array_slice($allParam, 0, count($allParam) - $offset));
         if (!is_numeric($id) && !str_starts_with($id, 'http')) {
             $id = 'https://' . $id;
         }
-        $tranform = implode('/', array_slice($allParam, count($allParam) - 4));
-        return [$id, $tranform];
+        // correct victims of uri normalization
+        $id        = (string) preg_replace('`^(https?:/)([^/])`', '\\1/\\2', $id);
+        $transform = implode('/', array_slice($allParam, count($allParam) - $offset));
+        return [$id, $transform];
     }
-    
+
     /**
      * Gets the requested repository resource metadata and converts it to the thumbnail's
      * service ResourceMeta object.
@@ -87,11 +90,12 @@ class Resource {
     private LoggerInterface | null $log;
 
     public function __construct(RepoResourceInterface $res, string $iiifRequest,
-                                object $config, CallbackContextInterface $context) {
+                                object $config,
+                                CallbackContextInterface $context) {
         $this->res           = $res;
         $this->request       = new IiifImageRequest($iiifRequest);
         $this->config        = $config;
-        $this->context = $context;
+        $this->context       = $context;
         $this->serviceConfig = new ServiceConfig(
             $config->iiifImage->maxWidth ?? throw new IiifImageException("Configuration misses iiifImage.maxWidth property"),
             $config->iiifImage->maxHeight ?? throw new IiifImageException("Configuration misses iiifImage.maxHeight property"),
@@ -138,6 +142,9 @@ class Resource {
         $cacheFile = $cacheDir . '/' . hash(self::HASH, $resUri) . '/' . hash(self::HASH, $canonical);
         if ($force === false && file_exists($cacheFile)) {
             return new ResponseCacheItem($cacheFile, 200, $headers, true, true);
+        }
+        if (!file_exists(dirname($cacheFile))) {
+            mkdir(dirname($cacheFile), 0700, true);
         }
 
         $path        = $this->context->getFileCache()->getResourceBinaryPath($this->res, $this->context->getNoCache());
@@ -296,7 +303,7 @@ class Resource {
         }
         $ret = [];
         foreach ($values as $i) {
-            $key       = $i instanceof LiteralInterface ? $i->getLang() : '';
+            $key                = $i instanceof LiteralInterface ? $i->getLang() : '';
             $ret[(string) $key] = [(string) $i];
         }
         return $ret;
