@@ -34,6 +34,9 @@ jobs:
           vendor/bin/yaml-edit.php --src build/config/arche.yaml --src "{\"dissCacheService\": {\"repoDb\": []}, \"auth\": {\"defaultAuth\": [\"$ARCHE_LOGIN\", \"$ARCHE_PSWD\"]}, \"fileCache\": {\"localAccess\": []}}" config.yaml
           docker run -d --name "$IMAGE_NAME" -v `pwd`/config.yaml:/var/www/html/config.yaml -p 8080:80 "acdhch/$IMAGE_NAME:latest"
           sleep 3
+          # info.json
+          curl -f 'http://127.0.0.1:8080/https://hdl.handle.net/21.11115/0000-0016-DC89-6/full/max/0/default.png' && \
+            grep '"height":1488'
           # normal image
           curl -f 'http://127.0.0.1:8080/https://hdl.handle.net/21.11115/0000-0016-DC89-6/full/max/0/default.png' > /tmp/test.png && \
             file /tmp/test.png | grep 'PNG image data, 1984 x 1488, 8-bit/color RGB, non-interlaced'
