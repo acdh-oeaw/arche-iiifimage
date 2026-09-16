@@ -44,7 +44,7 @@ iiifImage:
   info:
     idRegex: "`^https://id.acdh.oeaw.ac.at/`"
     rightsRegex: "`^(?!https://arche|https://id.acdh.oeaw.ac.at/|https://vocabs.acdh.oeaw.ac.at/)`"
-  unauthorizedImageUri: https://id.acdh.oeaw.ac.at/dissemination/loris/unauthorizedImage.png
+  unauthorizedImageUri: https://id.acdh.oeaw.ac.at/unauthorizedImage.png
 fileCache:
   dir: /var/www/html/cache
   maxSizeMb: 1000
