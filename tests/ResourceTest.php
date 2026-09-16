@@ -115,17 +115,18 @@ class ResourceTest extends \PHPUnit\Framework\TestCase {
         $this->assertFalse($resp1->hit);
         $this->assertFalse($resp1->file);
         $this->assertEquals(200, $resp1->responseCode);
+        $canonical  = 'https://arche-iiifimage.acdh.oeaw.ac.at/https%3A%2F%2Farche.acdh.oeaw.ac.at%2Fapi%2F997283';
         $refHeaders = [
             'Content-Type' => 'application/ld+json;profile="http://iiif.io/api/image/3/context.json"',
             'Link'         => [
                 '<http://iiif.io/api/image/3/level2.json>;rel="profile"',
-                'https://arche-iiifimage.acdh.oeaw.ac.at/https%3A%2F%2Farche.acdh.oeaw.ac.at%2Fapi%2F997283/info.json;rel="canonical"',
+                $canonical . '/info.json;rel="canonical"',
             ]
         ];
         $this->assertEqualsCanonicalizing($refHeaders, $resp1->headers);
         $refBody    = [
             "@context"         => Resource::JSONLD_CONTEXT,
-            "id"               => $resUri,
+            "id"               => $canonical,
             "type"             => "ImageService3",
             "protocol"         => "http://iiif.io/api/image",
             "profile"          => "level2",

@@ -193,9 +193,10 @@ class Resource {
 
         $meta   = $this->res->getGraph();
         $resUri = (string) $this->res->getUri();
+        $id = ($this->config->iiifImage->baseUrl ?? '') . urlencode($resUri);
         $body   = [
             "@context"         => self::JSONLD_CONTEXT,
-            "id"               => $resUri,
+            "id"               => $id,
             "type"             => "ImageService3",
             "protocol"         => "http://iiif.io/api/image",
             "profile"          => "level2",
