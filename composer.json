@@ -13,7 +13,7 @@
     ],
     "require": {
         "php": "^8.3",
-        "acdh-oeaw/arche-diss-cache": "^3.0.9",
+        "acdh-oeaw/arche-diss-cache": "^3.0.10",
         "zozlak/http-accept": "^1.0",
         "zozlak/yaml-merge": "^1.0"
     },
