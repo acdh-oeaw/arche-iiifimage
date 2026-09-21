@@ -7,7 +7,7 @@ dissCacheService:
   ttl:
     resource: 3600     # 1 hour
     response: 31536000 # 1 year
-  maxCount: 100000
+  maxCount: 50000
   repoDb:
   - archeProd.yaml
   - archeCur.yaml
@@ -47,7 +47,7 @@ iiifImage:
   unauthorizedImageUri: https://id.acdh.oeaw.ac.at/unauthorizedImage.png
 fileCache:
   dir: /var/www/html/cache
-  maxSizeMb: 1000
+  maxSizeMb: 3000
   clearMode: time
   maxDownloadSizeMb: 100
   mimeProperty: https://vocabs.acdh.oeaw.ac.at/schema#hasFormat
