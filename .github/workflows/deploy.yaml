@@ -15,6 +15,9 @@ jobs:
   testAndDeploy:
     runs-on: ubuntu-latest
     steps:
+      - name: foo
+        run:
+          echo "event_name" && echo ${{ github.event_name }} && echo "event.action" && echo ${{ github.event.action }} && echo "equal releas" && echo ${{ github.event_name == 'release' }} && echo "equal published" && echo ${{ github.event.action == 'published' }} && echo "equal released and published" && echo ${{ github.event_name == 'release' && github.event.action == 'published' }}
       - uses: acdh-oeaw/arche_cicd_start_action@main
         with:
           phpExtensions: json,yaml,pdo,pdo_sqlite,imagick
@@ -24,9 +27,6 @@ jobs:
         run: |
           mkdir build/docroot && cp -R `ls -1 | grep -v ^build` build/docroot/ && cp build/config/arche.yaml build/docroot/config.yaml
           docker build --rm -t "acdhch/$IMAGE_NAME:latest" --build-arg VARIANT=production --label "buildUrl=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" build
-      - name: foo
-        run:
-          echo "event_name" && echo ${{ github.event_name }} && echo "event.action" && echo ${{ github.event.action }}
       #- uses: mxschmitt/action-tmate@v3
       - name: test image
         env:
