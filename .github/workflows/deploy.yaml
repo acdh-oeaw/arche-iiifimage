@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: foo
         run:
-          echo "event_name" && echo ${{ github.event_name }} && echo "event.action" && echo ${{ github.event.action }} && echo "equal releas" && echo ${{ github.event_name == 'release' }} && echo "equal published" && echo ${{ github.event.action == 'published' }} && echo "equal released and published" && echo ${{ github.event_name == 'release' && github.event.action == 'published' }}
+          echo "event_name" && echo ${{ github.event_name }} && echo "event.action" && echo ${{ github.event.action }} && echo "equal releas" && echo ${{ github.event_name == 'release' }} && echo "equal published" && echo ${{ github.event.action == 'published' }} && echo "equal released and published" && echo ${{ github.event_name == 'release' && github.event.action == 'published' }} && echo "inputs.deploy" && echo ${{ inputs.deploy }} && echo "full condition" && echo ${{ github.event_name == 'release' && github.event.action == 'published' || inputs.deploy }}
       - uses: acdh-oeaw/arche_cicd_start_action@main
         with:
           phpExtensions: json,yaml,pdo,pdo_sqlite,imagick
